@@ -1531,6 +1531,7 @@ while running:
         game_over = True
         bossOrder = 0
         boss_difficult = 1
+        phase = 50
         # ---------------------------------------------- #
         boss_appear = False
         for sprite in all_sprites:
