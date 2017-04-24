@@ -1,4 +1,5 @@
 # ----------------------------------------------------------------------------- #
+#                     Pygame https://www.pygame.org/docs/                       #
 #                     Art   from kenney in opengameart.org                      #
 #                     Sound from Jan125 in opengameart.org                      #
 #                           from Volvion in freesound.org                       #
@@ -127,6 +128,7 @@ def main_menu():
     draw_text(screen, 'START', 30, width / 2, 480)
     draw_text(screen, 'HIGH SCORE: ' + str(highscore), 30, width / 2, 510)
     draw_text(screen, 'EXIT', 30, width / 2, 540)
+    draw_text(screen, 'Arrow key to move. Space bar to shoot.', 27, width/2, 600)
     for star in stars_bg_list1:
         pygame.draw.rect(screen, white, (star[0], star[1], 1, 1), 0)
         star[1] = star[1] + 1
@@ -157,6 +159,7 @@ def main_menu():
 
 
 def pause_scr():
+    pygame.mixer.music.pause()
     draw_text(screen, 'GAME PAUSE', 60, width / 2, height / 2)
     draw_text(screen, 'RESUME', 30, width / 2, height / 2 + 70)
     #draw_text(screen, 'MAIN MENU', 30, width / 2, height / 2 + 100)
@@ -167,6 +170,7 @@ def pause_scr():
         clock.tick(fps)
         for event in pygame.event.get():
             if button(198, 420, 90, 29):
+                pygame.mixer.music.unpause()
                 waiting = False
             if button(212, 455, 60, 28):
                 pygame.quit()
@@ -199,6 +203,9 @@ def game_over_scr():
             if button(120, 550, 240, 20):
                 screen.fill(black)
                 return 3
+            if button(215, 600, 50, 20):
+                pygame.quit()
+                quit()
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
@@ -294,7 +301,7 @@ class B0P2(pygame.sprite.Sprite):
     def update(self):
         self.rect.y += self.speed
 
-        if self.rect.y >= height - (height / 4):
+        if self.rect.y >= height - 80:
             self.kill()
             expl_sound.play()
             expl = Explosion(self.rect.center, 'sulg')
@@ -400,7 +407,6 @@ class Boss_1(pygame.sprite.Sprite):
         if self.ulti <= 0 and self.pattern == 3:
             self.ulti = self.ori_ulti
 
-
 class B1P1(pygame.sprite.Sprite):
 
     def __init__(self, x):
@@ -444,32 +450,37 @@ class B1P2(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = curBoss.rect.centerx + 5
         self.rect.y = curBoss.rect.bottom
-        self.radius = int(self.rect.width * 0.85 / 2)
+        self.radius = self.rect.width / 2 * 0.5
         self.hp = 15
         self.speed = 3 + boss_difficult
         self.rot = 0
         self.rot_speed = 30
+        self.warp = 150//boss_difficult
         self.last_update = pygame.time.get_ticks()
 
         boss_bullet.add(self)
         all_sprites.add(self)
 
     def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.warp:
+            self.last_update = now
+            self.rect.x = random.choice([0,330])
+
         self.rect.y += self.speed
-        self.rect.x += random.choice((self.speed, -self.speed))
         if self.rect.y >= height + 10:
             self.kill()
         curBoss.skill_cooldown = pygame.time.get_ticks()
 
-        now = pygame.time.get_ticks()
-        if now - self.last_update > 50:
-            self.last_update = now
-            self.rot = (self.rot + self.rot_speed) % 360
-            new_img = pygame.transform.rotate(self.image_orig, self.rot)
-            old_center = self.rect.center
-            self.image = new_img
-            self.rect = self.image.get_rect()
-            self.rect.center = old_center
+        # now = pygame.time.get_ticks()
+        # if now - self.last_update > 50:
+        #     self.last_update = now
+        #     self.rot = (self.rot + self.rot_speed) % 360
+        #     new_img = pygame.transform.rotate(self.image_orig, self.rot)
+        #     old_center = self.rect.center
+        #     self.image = new_img
+        #     self.rect = self.image.get_rect()
+        #     self.rect.center = old_center
 
 
 class B1P3(pygame.sprite.Sprite):
@@ -833,7 +844,7 @@ class B2P4(pygame.sprite.Sprite):
         self.rect.y = curBoss.rect.bottom + 30
         self.radius = self.rect.width / 2 * 0.8
         self.position = position
-        self.speed = 3 + boss_difficult
+        self.speed = 3 
         self.change_direct = False
 
         all_sprites.add(self)
@@ -879,6 +890,7 @@ class Player(pygame.sprite.Sprite):
         self.hp = 100
         self.shoot_delay = 250
         self.last_shot = pygame.time.get_ticks()
+        self.last_sound = pygame.time.get_ticks()
         self.lives = 3
         self.hidden = False
         self.hide_timer = pygame.time.get_ticks()
@@ -929,19 +941,23 @@ class Player(pygame.sprite.Sprite):
                 self.rect.top = 0
 
     def powerup(self):
-        self.power += 1
+        self.power = 2
         self.power_time = pygame.time.get_ticks()
 
     def shoot(self):
-        now = pygame.time.get_ticks()
-        if now - self.last_shot > self.shoot_delay:
-            self.last_shot = now
+        now2 = pygame.time.get_ticks()
+        now1 = pygame.time.get_ticks()
+
+        if now1 - self.last_sound > self.shoot_delay*1.5:
+            self.last_sound = now1
+            shoot_sound.play() 
+        if now2 - self.last_shot > self.shoot_delay:
+            self.last_shot = now2
 
             if self.power == 1:
                 bullet = Bullet(self.rect.centerx, self.rect.top)
                 all_sprites.add(bullet)
                 bullets.add(bullet)
-                shoot_sound.play()
             if self.power >= 2:
                 bullet1 = Bullet(self.rect.left, self.rect.centery)
                 bullet2 = Bullet(self.rect.right, self.rect.centery)
@@ -949,7 +965,10 @@ class Player(pygame.sprite.Sprite):
                 all_sprites.add(bullet2)
                 bullets.add(bullet1)
                 bullets.add(bullet2)
-                shoot_sound.play()
+            
+        #if now - self.last_shot > self.shoot_delay*2:
+
+            
 
     def hide(self):
         self.hidden = True
@@ -1106,7 +1125,7 @@ bulletred_img = pygame.image.load(
 
 meteor_img = []
 meteor_list = ['m1.png', 'm2.png', 'm3.png',
-               'm4.png', 'm5.png', 'm6.png', 'm7.png', 'm8.png']
+               'm4.png']
 for img in meteor_list:
     meteor_img.append(pygame.image.load(
         path.join(img_folder, img)).convert_alpha())
@@ -1202,8 +1221,9 @@ player_die_sound = pygame.mixer.Sound(path.join(snd_folder, 'die.wav'))
 boss_appear_sound = pygame.mixer.Sound(
     path.join(snd_folder, 'boss_appearance.wav'))
 pygame.mixer.music.set_volume(.75)
-shoot_sound.set_volume(.1)
-expl_sound.set_volume(.1)
+shoot_sound.set_volume(0.085)
+expl_sound.set_volume(0.025)
+player_die_sound.set_volume(0.1)
 
 pygame.mixer.music.play(loops=-1)
 # ----------------------------------------------------------------------------- #
@@ -1225,14 +1245,20 @@ now = pygame.time.get_ticks()
 
 # ----------------------------------------------------------------------------- #
 while running:
+    # print(hit_times)
+    # print(phase)
     # print(boss_difficult)
     # print(bossOrder)
     # print(count)
     if game_over:
+
         # print(count)
         if count == 3:
+            pygame.mixer.music.unpause()
             main_menu()
+            
         elif count == 0:
+            pygame.mixer.music.pause()
             count = game_over_scr()
             game_over = True
             continue
@@ -1250,7 +1276,7 @@ while running:
         player = Player()
         all_sprites.add(player)
 
-        for i in range(4):
+        for i in range(3 + boss_difficult):
             newmob()
 
         score = 0
@@ -1288,7 +1314,7 @@ while running:
     if hit_times >= phase:
         hit_times = 0
         # mobs will be increased in each time when boss appear
-        phase += phase * 0.1
+        phase += phase * 0.2
         boss_appear = True
 
         for mob in mobs:
@@ -1376,7 +1402,7 @@ while running:
 
             pygame.mixer.music.load(path.join(snd_folder, 'bg.ogg'))
             pygame.mixer.music.play(loops=-1)
-            for i in range(5):
+            for i in range(4 + boss_difficult):
                 newmob()
 
         # check to see if a bullet hit a boss_bullet
@@ -1498,7 +1524,7 @@ while running:
     hits = pygame.sprite.spritecollide(player, powerups, True)
     for hit in hits:
         if hit.type == 'hp':
-            player.hp += random.randrange(30, 50)
+            player.hp += random.randrange(25, 40)
             if player.hp >= 100:
                 player.hp = 100
         if hit.type == 'gun':
@@ -1532,6 +1558,11 @@ while running:
         bossOrder = 0
         boss_difficult = 1
         phase = 50
+        hit_times = 0
+        pygame.mixer.music.load(path.join(snd_folder, 'bg.ogg'))
+        pygame.mixer.music.play(loops=-1)
+        
+
         # ---------------------------------------------- #
         boss_appear = False
         for sprite in all_sprites:
