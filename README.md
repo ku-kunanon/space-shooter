@@ -1,19 +1,29 @@
-# space-shooter
+# Space Shooter
 
 204113 [Principles of Computing]
 
-for the lastest version please visit: https://github.com/kunanon-chumsaeng/space-shooter 
+Computer Science Department, Faculty of Science
+
+Chiang Mai University 
 
 
+### Control
+```
 Arrow key to move. Space bar to shoot.(both trigger and hold)
+```
 
-
+### Install and Requirement
 This source code need following library to work properly
-1. Python 3.6.1 https://www.python.org/
-2. Pygame http://www.pygame.org/docs/
+1. [Python 3.6](https://www.python.org/)
+2. [Pygame](http://www.pygame.org/docs/)
+
+Install Python and then Pygame. Run game.py through command-line interface. 
+```
+python game.py
+```
 
 
-Contributors
+### Contributors
 
 590510527 นายกฤตนัย ธรรมเอี่ยม
 
